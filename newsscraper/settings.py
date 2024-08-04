@@ -12,7 +12,9 @@ BOT_NAME = "newsscraper"
 SPIDER_MODULES = ["newsscraper.spiders"]
 NEWSPIDER_MODULE = "newsscraper.spiders"
 
-
+# FEEDS = {
+#    "newsdata.json" : {"format": "json"}
+# }
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "newsscraper (+http://www.yourdomain.com)"
 
@@ -62,9 +64,11 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "newsscraper.pipelines.NewsscraperPipeline": 300,
-#}
+ITEM_PIPELINES = {
+   "newsscraper.pipelines.NewsscraperPipeline": 300,
+   "newsscraper.pipelines.SaveToMySQLPipline": 400,
+   
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
