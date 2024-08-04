@@ -6,9 +6,10 @@
 
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
-import mysql.connector
+
 
 import boto3
+import uuid
 
 
 
@@ -24,49 +25,57 @@ class NewsscraperPipeline:
                 value = adapter.get(field_name)
                 adapter[field_name] =value.strip()
         return item
-class SaveToMySQLPipline:
+    
+class DynamoDBPipeline:
     def __init__(self):
-        self.conn =mysql.connector.connect(
-            host = "localhost",
-            user = "root",
-            password="",
-            database ="news"
-        )
-        self.cur = self.conn.cursor()
-        
-        self.cur.execute("""
-           CREATE TABLE IF NOT EXISTS news(
-            id int NOT NULL auto_increment, 
-            title text,
-            author text,
-            content text,
-            description text,
-            PRIMARY KEY (id)
-        )
-        """)
-        
-        
-
+        self.dynamodb = boto3.resource('dynamodb')
+        self.table_name = 'ScrapyData'
+        self.create_table()
         
     def process_item(self, item, spider):
         try:
-            self.cur.execute("""
-                INSERT INTO news (title, author, content, description)
-                VALUES (%s, %s, %s, %s)
-            """, (
-                item["title"],
-                item["author"],
-                item["content"],
-                item["description"]
-            ))
-            self.conn.commit()
-        except mysql.connector.errors.ProgrammingError as e:
-            spider.logger.error(f"Error: {e}")
+            self.dynamodb.Table(self.table_name).put_item(Item={
+            "id": str(uuid.uuid4()),
+            "title": item["title"],
+            "author" : item["author"],
+            "description" : item["description"],
+            "content": item["content"]
+            })
+        except Exception as e:
+            print(f"An error occurred: {e}")
         return item
         
-            
-    def close_spider(self, spider):
+    def create_table(self):
+            try:
+                self.table = self.dynamodb.create_table(
+                       TableName=self.table_name,
+                    KeySchema=[
+                        {
+                            'AttributeName': 'id',
+                            'KeyType': 'HASH'  # Partition key
+                        },
+                    ],
+                    AttributeDefinitions=[
+                        {
+                            'AttributeName': 'id',
+                            'AttributeType': 'S'
+                        }
+                    ],
+                        ProvisionedThroughput={
+                            'ReadCapacityUnits': 1,
+                            'WriteCapacityUnits': 1
+                        }
+                    )
+                self.table.meta.client.get_waiter('table_exists').wait(TableName=self.table_name)
+                print(f"Table {self.table_name} created successfully.")
+                
+               
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                
 
-        ## Close cursor & connection to database 
-        self.cur.close()
-        self.conn.close()
+                
+        
+        
+
+    

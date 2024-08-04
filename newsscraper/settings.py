@@ -66,8 +66,7 @@ ROBOTSTXT_OBEY = True
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    "newsscraper.pipelines.NewsscraperPipeline": 300,
-   "newsscraper.pipelines.SaveToMySQLPipline": 400,
-   
+   "newsscraper.pipelines.DynamoDBPipeline": 400,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
